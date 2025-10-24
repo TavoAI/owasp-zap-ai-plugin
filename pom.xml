@@ -142,36 +142,10 @@
                             <Zap-AddOn-Description>AI-specific security testing for OWASP ZAP</Zap-AddOn-Description>
                             <Zap-AddOn-Author>TavoAI</Zap-AddOn-Author>
                             <Zap-AddOn-Url>https://github.com/tavoai/owasp-zap-ai-plugin</Zap-AddOn-Url>
+                            <Zap-AddOn-Status>beta</Zap-AddOn-Status>
+                            <Zap-AddOn-Dependencies>org.zaproxy:commonlib</Zap-AddOn-Dependencies>
                         </manifestEntries>
                     </archive>
-                </configuration>
-            </plugin>
-
-            <!-- ZAP Add-on Plugin -->
-            <plugin>
-                <groupId>org.zaproxy</groupId>
-                <artifactId>zap-add-on-maven-plugin</artifactId>
-                <version>0.6.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>addon</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <addOnId>net.tavoai.zap.ai</addOnId>
-                    <addOnName>AI Security Testing</addOnName>
-                    <addOnVersion>${project.version}</addOnVersion>
-                    <addOnDescription>AI-specific security testing for OWASP ZAP</addOnDescription>
-                    <addOnAuthor>TavoAI</addOnAuthor>
-                    <addOnUrl>https://github.com/tavoai/owasp-zap-ai-plugin</addOnUrl>
-                    <addOnChangesUrl>https://github.com/tavoai/owasp-zap-ai-plugin/blob/main/CHANGELOG.md</addOnChangesUrl>
-                    <addOnRepoUrl>https://github.com/tavoai/owasp-zap-ai-plugin</addOnRepoUrl>
-                    <files>
-                        <file>src/main/zap</file>
-                    </files>
                 </configuration>
             </plugin>
         </plugins>

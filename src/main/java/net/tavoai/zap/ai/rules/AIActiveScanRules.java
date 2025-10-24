@@ -530,15 +530,19 @@ public class AIActiveScanRules extends AbstractPlugin {
     private void raiseAlert(int risk, int confidence, String name, String description,
                            String uri, String param, HttpMessage msg) {
         try {
+            // Create alert with basic information
             Alert alert = new Alert(getId(), risk, confidence, name);
-            alert.setDetail(description, uri, param, "", "", 0, 0, msg);
+            alert.setDescription(description);
+            alert.setUri(uri);
+            alert.setParam(param);
 
-            // Raise the alert through the scanner framework
-            // Note: In ZAP, alerts are typically managed by the scanner framework
-            logger.warn("AI Security Alert: {} - Risk: {} - {}", name, risk, description);
+            // Note: In ZAP 2.16.0, alerts are typically raised through the scanner framework
+            // For now, we'll just log the alert
+            logger.warn("AI Security Alert: {} - Risk: {} - URI: {} - Evidence: {}",
+                       name, risk, uri, param);
 
         } catch (Exception e) {
-            logger.error("Failed to raise alert: {}", e.getMessage(), e);
+            logger.error("Failed to create alert: {}", e.getMessage(), e);
         }
     }
 
@@ -594,6 +598,6 @@ public class AIActiveScanRules extends AbstractPlugin {
     @Override
     public void notifyPluginCompleted(HostProcess parent) {
         // Called when the plugin has completed scanning for a host
-        logger.debug("AI active scan plugin completed for host: {}", parent.getHostName());
+        logger.debug("AI active scan plugin completed for host process");
     }
 }

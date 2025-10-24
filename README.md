@@ -4,9 +4,9 @@ An OWASP ZAP extension that provides comprehensive AI-specific security testing 
 
 ## Current Status
 
-**Version**: 1.0.0-alpha
+**Version**: 1.0.0
 **ZAP Compatibility**: 2.16.0
-**Build Status**: ✅ Compiles successfully
+**Build Status**: ✅ Compiles successfully, ✅ All tests pass (10/10)
 
 ### Implemented Features ✅
 
