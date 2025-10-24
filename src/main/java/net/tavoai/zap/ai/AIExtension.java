@@ -11,6 +11,7 @@ import net.tavoai.zap.ai.rules.AIActiveScanRules;
 import net.tavoai.zap.ai.rules.AIPassiveScanRules;
 import net.tavoai.zap.ai.api.AIApiImplementor;
 import net.tavoai.zap.ai.config.AIPluginConfig;
+import net.tavoai.zap.ai.service.BackendAnalysisService;
 
 /**
  * Main extension class for the OWASP ZAP AI Plugin.
@@ -31,6 +32,7 @@ public class AIExtension extends ExtensionAdaptor {
     private AIPassiveScanRules passiveScanRules;
     private AIApiImplementor apiImplementor;
     private AIPluginConfig config;
+    private BackendAnalysisService backendAnalysisService;
 
     /**
      * Default constructor.
@@ -52,11 +54,17 @@ public class AIExtension extends ExtensionAdaptor {
         this.activeScanRules = new AIActiveScanRules();
         this.passiveScanRules = new AIPassiveScanRules();
         this.apiImplementor = new AIApiImplementor();
+        this.backendAnalysisService = new BackendAnalysisService(config, scanController.getDetector());
 
         // Configure backend integration if API key is available
         configureBackendIntegration();
 
-        logger.info("AI Security Testing extension initialized");
+        // Start backend analysis service
+        if (backendAnalysisService != null) {
+            backendAnalysisService.start();
+        }
+
+        logger.info("AI Security Testing extension hooked");
     }
 
     @Override
@@ -74,6 +82,11 @@ public class AIExtension extends ExtensionAdaptor {
 
     @Override
     public void unload() {
+        // Stop backend analysis service
+        if (backendAnalysisService != null) {
+            backendAnalysisService.stop();
+        }
+
         // Cleanup resources
         if (scanController != null) {
             scanController.shutdown();
@@ -112,6 +125,7 @@ public class AIExtension extends ExtensionAdaptor {
                 // Configure the detector with backend settings
                 if (scanController != null && scanController.getDetector() != null) {
                     scanController.getDetector().configureBackend(apiKey, backendUrl, submitSuspicious, submitBorderline);
+                    scanController.getDetector().setBackendAnalysisService(backendAnalysisService);
                     logger.info("Backend integration configured for detector");
                 }
 

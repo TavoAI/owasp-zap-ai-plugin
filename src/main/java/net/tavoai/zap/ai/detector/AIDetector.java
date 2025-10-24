@@ -8,6 +8,7 @@ import net.tavoai.zap.ai.model.AIThreat;
 import net.tavoai.zap.ai.model.ThreatType;
 import net.tavoai.zap.ai.model.ThreatSeverity;
 import net.tavoai.zap.ai.client.BackendClient;
+import net.tavoai.zap.ai.service.BackendAnalysisService;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ public class AIDetector {
     private boolean submitSuspiciousContent = true;
     private boolean submitBorderlineContent = false;
     private Map<String, Pattern> customPatterns = new HashMap<>();
+    private BackendAnalysisService backendAnalysisService;
 
     // PII Filter for content sanitization
     private final PIIFilter piiFilter;
@@ -201,6 +203,12 @@ public class AIDetector {
             if (analysisId.isPresent()) {
                 logger.debug("Content submitted for backend analysis - ID: {}, Type: {}, Severity: {}",
                            analysisId.get(), threatType, severity);
+
+                // Track pending analysis if service is available
+                if (backendAnalysisService != null) {
+                    backendAnalysisService.addPendingAnalysis(analysisId.get());
+                }
+
                 return analysisId;
             } else {
                 logger.warn("Failed to submit content for backend analysis");
@@ -249,12 +257,12 @@ public class AIDetector {
     }
 
     /**
-     * Get the PII filter instance.
+     * Set the backend analysis service for tracking analyses.
      *
-     * @return the PII filter
+     * @param service the backend analysis service
      */
-    public PIIFilter getPIIFilter() {
-        return piiFilter;
+    public void setBackendAnalysisService(BackendAnalysisService service) {
+        this.backendAnalysisService = service;
     }
 
     /**
@@ -578,5 +586,14 @@ public class AIDetector {
             logger.debug("Could not get request body: {}", e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Get the PII filter instance.
+     *
+     * @return the PII filter
+     */
+    public PIIFilter getPIIFilter() {
+        return piiFilter;
     }
 }

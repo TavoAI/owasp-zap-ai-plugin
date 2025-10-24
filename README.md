@@ -17,6 +17,7 @@ An OWASP ZAP extension that provides comprehensive AI-specific security testing 
 - **Backend Integration**: BackendClient.java for secure API key authentication and content submission
 - **AI Traffic Detection**: AIDetector.java for identifying AI service endpoints and analyzing HTTP traffic
 - **Scan Controller**: AIScanController.java for managing scan operations and results
+- **Backend Analysis Service**: BackendAnalysisService.java for automated rule updates and analysis result processing
 
 ### Features Yet To Implement 🚧
 
@@ -68,9 +69,16 @@ An OWASP ZAP extension that provides comprehensive AI-specific security testing 
 │  │             │  │   (✅)      │  │                     │ │
 │  └─────────────┘  └─────────────┘  └─────────────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────┐                                   │
+│  │ Backend Analysis    │                                   │
+│  │ Service   (✅)      │                                   │
+│  │                     │                                   │
+│  └─────────────────────┘                                   │
+├─────────────────────────────────────────────────────────────┤
 │                    ZAP Extension API                        │
 ├─────────────────────────────────────────────────────────────┤
 │  Passive Scan Rules • API Endpoints • Backend Integration  │
+│  • Automated Rule Updates • Analysis Result Processing     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -168,14 +176,15 @@ Content-Type: application/json
   - Potential data exfiltration attempts
   - Rate limiting analysis
 
-#### 3. Backend Integration
-- **Status**: ✅ Implemented in BackendClient.java
-- **Description**: Secure submission of suspicious content to backend service
+#### 4. Backend Analysis Service
+- **Status**: ✅ Fully implemented in BackendAnalysisService.java
+- **Description**: Automated background service for rule updates and analysis result processing
 - **Features**:
-  - API key authentication
-  - Content submission with metadata
-  - Error handling and retry logic
-  - Configurable submission filters
+  - Periodic rule updates from backend (every 60 minutes)
+  - Automatic analysis result retrieval (every 30 seconds)
+  - Thread-safe service lifecycle management
+  - Pending analysis tracking and cleanup
+  - Configurable update intervals and concurrency limits
 
 ### Active Scan Rules (🚧 Planned)
 
@@ -215,57 +224,226 @@ Content-Type: application/json
   - Timing attacks: Exploiting timing windows
   - Proxy abuse: Using proxies to bypass limits
 
-### PII Filter (🚧 Critical Requirement)
+### Backend Analysis Service
 
-#### Overview
-- **Status**: 🚧 Not yet implemented (critical for production use)
-- **Purpose**: Filter Personal Identifiable Information before submitting content to AI service
-- **Importance**: Prevents accidental exposure of sensitive user data
+### Overview
+The Backend Analysis Service (`BackendAnalysisService.java`) provides automated background processing for AI security analysis. This service runs continuously in the background and handles:
 
-#### Required PII Patterns
+- **Periodic Rule Updates**: Automatically fetches and applies rule updates from the backend every 60 minutes
+- **Analysis Result Processing**: Checks for completed analyses every 30 seconds and processes results
+- **Service Lifecycle Management**: Thread-safe start/stop operations integrated with ZAP extension lifecycle
+- **Pending Analysis Tracking**: Maintains a queue of submitted analyses and monitors their completion
+
+### Key Features
+
+#### Automated Rule Updates
 ```java
-// Example PII patterns to detect and filter:
-- Email addresses: user@example.com
-- Phone numbers: (555) 123-4567, +1-555-123-4567
-- Social Security Numbers: 123-45-6789
-- Credit card numbers: 4111-1111-1111-1111
-- IP addresses: 192.168.1.1
-- API keys and tokens
-- Database connection strings
-- Internal system identifiers
+// Service automatically checks for rule updates every hour
+private static final long RULE_UPDATE_INTERVAL_MINUTES = 60;
+
+// Fetches updates from backend and applies them to the detector
+private boolean performRuleUpdate() {
+    Optional<String> ruleUpdates = backendClient.fetchRuleUpdates();
+    if (ruleUpdates.isPresent()) {
+        return applyRuleUpdates(ruleUpdates.get());
+    }
+    return false;
+}
 ```
 
-#### Implementation Plan
+#### Analysis Result Processing
 ```java
-public class PIIFilter {
-    private List<Pattern> piiPatterns;
-    private Map<String, String> replacementRules;
+// Checks analysis results every 30 seconds
+private static final long ANALYSIS_CHECK_INTERVAL_SECONDS = 30;
 
-    public String filterPII(String content) {
-        // Detect and mask/replace PII before submission
-        // Return filtered content safe for AI service submission
-    }
+// Processes completed analyses and updates detector
+private int performAnalysisCheck() {
+    // Check all pending analyses for completion
+    // Process results and update threat intelligence
+    // Clean up old/failed analyses
+}
+```
 
-    public List<PIIDetection> detectPII(String content) {
-        // Return list of detected PII with severity levels
+#### Persistent Storage
+```java
+// Data persists across ZAP restarts
+private static final String PENDING_ANALYSES_FILE = "pending-analyses.dat";
+private static final String COMPLETED_ANALYSES_FILE = "completed-analyses.dat";
+private static final String RULE_CACHE_FILE = "rule-cache.dat";
+
+// Storage location: ~/.ZAP/plugin-data/ai-plugin/
+private Path getStorageDirectory() {
+    String zapHome = System.getProperty("user.home") + "/.ZAP";
+    return Paths.get(zapHome, "plugin-data", "ai-plugin");
+}
+```
+
+#### Thread-Safe Operations
+```java
+// Atomic boolean for thread-safe state management
+private final AtomicBoolean running = new AtomicBoolean(false);
+
+// Read-write lock for thread-safe file operations
+private final ReadWriteLock storageLock = new ReentrantReadWriteLock();
+```
+
+### Configuration
+
+#### Service Intervals
+```yaml
+backend_analysis_service:
+  rule_update_interval_minutes: 60    # Check for rule updates every hour
+  analysis_check_interval_seconds: 30 # Check analysis results every 30 seconds
+  max_concurrent_analyses: 10         # Maximum analyses to process per check
+  analysis_timeout_hours: 24          # Remove analyses older than 24 hours
+```
+
+#### Backend Integration
+```java
+// Service integrates with existing backend configuration
+BackendAnalysisService service = new BackendAnalysisService(config, aiDetector);
+service.start(); // Starts automatic background processing
+```
+
+### Monitoring and Management
+
+#### Service Status
+```bash
+# Check service status via API
+curl "http://localhost:8080/JSON/ai/view/serviceStatus/"
+
+# Response includes:
+{
+  "running": true,
+  "backend_enabled": true,
+  "pending_analyses": 5,
+  "completed_analyses": 23,
+  "last_rule_update": "2025-10-24T10:30:00Z",
+  "last_analysis_check": "2025-10-24T10:32:15Z"
+}
+```
+
+#### Manual Operations
+```bash
+# Force immediate rule update check
+curl "http://localhost:8080/JSON/ai/action/forceRuleUpdate/"
+
+# Force immediate analysis results check
+curl "http://localhost:8080/JSON/ai/action/forceAnalysisCheck/"
+
+# Response: {"processed": 3} // Number of analyses processed
+```
+
+### Integration with ZAP Lifecycle
+
+The service is automatically integrated with the ZAP extension lifecycle:
+
+```java
+// In AIExtension.java
+@Override
+public void init() {
+    // Initialize service
+    backendAnalysisService = new BackendAnalysisService(config, detector);
+    backendAnalysisService.start();
+}
+
+@Override
+public void unload() {
+    // Stop service during extension unload
+    if (backendAnalysisService != null) {
+        backendAnalysisService.stop();
     }
 }
 ```
 
-#### Configuration
-```yaml
-pii_filter:
-  enabled: true
-  severity_levels:
-    - email: medium
-    - phone: high
-    - ssn: critical
-    - credit_card: critical
-  replacement_strategy: mask  # mask, remove, or replace
-  custom_patterns:
-    - pattern: "internal_id_\\d+"
-      severity: high
+### Benefits
+
+1. **Persistent State**: Analysis data survives ZAP restarts and system crashes
+2. **Automated Updates**: Rules stay current without manual intervention
+3. **Efficient Processing**: Background processing doesn't impact scanning performance
+4. **Reliable Operation**: Thread-safe design prevents race conditions and data corruption
+5. **Resource Management**: Automatic cleanup of old analyses and failed requests
+6. **Incremental Updates**: Rule change detection prevents unnecessary processing
+7. **Monitoring**: Comprehensive status reporting and manual override capabilities
+
+### Data Persistence and Storage
+
+The Backend Analysis Service implements robust data persistence to ensure analysis state survives ZAP restarts and system interruptions.
+
+#### Storage Architecture
+
+**File-Based Storage**:
 ```
+~/.ZAP/plugin-data/ai-plugin/
+├── pending-analyses.dat     # Serialized Map<String, Long> of pending analyses
+├── completed-analyses.dat   # Serialized List<String> of completed analysis IDs
+└── rule-cache.dat          # Text file with last rule update hash
+```
+
+**Storage Location**: `~/.ZAP/plugin-data/ai-plugin/` (Linux/Mac) or `%USERPROFILE%\.ZAP\plugin-data\ai-plugin\` (Windows)
+
+#### Persistence Strategy
+
+1. **Load on Startup**: All persistent data is loaded when the service initializes
+2. **Save on Changes**: Data is saved after processing analysis results
+3. **Save on Shutdown**: Complete state is saved when the service stops
+4. **Thread-Safe Access**: Read-write locks prevent data corruption during concurrent access
+5. **Error Recovery**: Service continues operating even if storage operations fail
+
+#### Data Structures
+
+**Pending Analyses** (`Map<String, Long>`):
+- Key: Analysis ID (String)
+- Value: Submission timestamp (Long, milliseconds since epoch)
+- Automatically cleaned up after 24 hours
+
+**Completed Analyses** (`List<String>`):
+- Stores last 100 completed analysis IDs
+- Used for duplicate detection and reporting
+- Rotates out old entries to prevent unbounded growth
+
+**Rule Cache** (`String`):
+- Hash of last successfully applied rule update
+- Prevents reprocessing identical rule updates
+- Stored as plain text for easy inspection
+
+#### Storage Operations
+
+```java
+// Thread-safe data loading
+private void loadPersistentData() {
+    storageLock.writeLock().lock();
+    try {
+        loadPendingAnalyses();
+        loadCompletedAnalyses();
+        loadRuleCache();
+    } finally {
+        storageLock.writeLock().unlock();
+    }
+}
+
+// Automatic saving after analysis processing
+if (processed > 0) {
+    savePersistentData(); // Saves all state to disk
+}
+```
+
+#### Benefits of File-Based Storage
+
+1. **ZAP Native**: Uses ZAP's standard plugin data directory
+2. **Cross-Platform**: Works on Windows, Mac, and Linux
+3. **Human Readable**: Text files can be inspected manually
+4. **Backup Friendly**: Easy to backup and restore
+5. **No Database Dependency**: Doesn't require ZAP's internal database access
+6. **Atomic Operations**: File operations are atomic where possible
+
+#### Future Database Integration
+
+While file-based storage is currently used for simplicity and reliability, future versions may migrate to ZAP's internal HSQLDB database for:
+- Better performance with large datasets
+- ACID transactions for data consistency
+- Built-in backup and recovery features
+- SQL querying capabilities for analytics
 
 ## Installation
 
@@ -442,6 +620,11 @@ curl "http://localhost:8080/JSON/ai/view/threats/"
 
 # Get current scan status
 curl "http://localhost:8080/JSON/ai/view/status/"
+
+# Backend Analysis Service Management
+curl "http://localhost:8080/JSON/ai/action/forceRuleUpdate/"
+curl "http://localhost:8080/JSON/ai/action/forceAnalysisCheck/"
+curl "http://localhost:8080/JSON/ai/view/serviceStatus/"
 ```
 
 #### Backend Integration Configuration
@@ -453,6 +636,13 @@ curl "http://localhost:8080/JSON/ai/action/configureBackend/" \
   -d "backendUrl=https://api.tavoai.net" \
   -d "submitSuspicious=true" \
   -d "submitBorderline=false"
+
+# Backend Analysis Service Configuration
+curl "http://localhost:8080/JSON/ai/action/configureService/" \
+  -d "ruleUpdateIntervalMinutes=60" \
+  -d "analysisCheckIntervalSeconds=30" \
+  -d "maxConcurrentAnalyses=10"
+```
 ```
 
 ### Python API Integration
@@ -474,10 +664,17 @@ zap.ai.configure_backend(
 # Start passive AI security scan
 scan_id = zap.ai.scan(url='http://target-app.com')
 
-# Get results
-results = zap.ai.results(scan_id)
-threats = zap.ai.threats()
-status = zap.ai.status()
+# Get service status
+results = zap.ai.service_status()
+print(f"Service running: {results['running']}")
+print(f"Pending analyses: {results['pending_count']}")
+print(f"Completed analyses: {results['completed_count']}")
+
+# Force immediate operations
+zap.ai.force_rule_update()
+processed = zap.ai.force_analysis_check()
+print(f"Processed {processed} analysis results")
+```
 ```
 
 ### Current Limitations
@@ -523,6 +720,7 @@ status = zap.ai.status()
 - [x] Passive scan rules implementation
 - [x] API endpoint implementation
 - [x] Backend client integration
+- [x] Backend analysis service with automated rule updates and analysis processing
 
 ### Phase 2: Security Features (🚧 In Progress)
 - [ ] **PII Filter Implementation** (Critical Priority)
@@ -530,6 +728,7 @@ status = zap.ai.status()
   - Configurable filtering rules
   - Multiple replacement strategies (mask, remove, replace)
 - [ ] Active scan rules rewrite for ZAP 2.16.0
+- [ ] Zap HSQLDB for rule storage, submission management, etc.
 - [ ] Prompt injection testing
 - [ ] Model manipulation detection
 
@@ -555,12 +754,11 @@ status = zap.ai.status()
 2. **Active Scanning Disabled**: Major rewrite required for ZAP 2.16.0 active scanner API
 3. **Limited Rule Coverage**: Only basic passive detection implemented
 
-### Known Limitations
-- No custom rule configuration
-- No advanced reporting formats
-- No real-time monitoring capabilities
-- Limited AI service detection patterns
-- No content safety validation
+### Current Limitations
+- **Active scanning not available**: Active scan rules are stubbed and require major rewrite for ZAP 2.16.0 active scanner API
+- **PII filtering not implemented**: Content submitted to backend may contain sensitive information
+- **Limited rule coverage**: Only basic passive detection implemented
+- **No custom rule engine**: Cannot add organization-specific security rules yet
 
 ### Workarounds
 - Use passive scanning only for initial AI traffic detection
