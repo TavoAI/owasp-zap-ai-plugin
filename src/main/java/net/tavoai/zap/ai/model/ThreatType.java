@@ -1,4 +1,4 @@
-package com.tavoai.zap.ai.model;
+package net.tavoai.zap.ai.model;
 
 /**
  * Enumeration of AI security threat types.

@@ -1,4 +1,4 @@
-package com.tavoai.zap.ai.api;
+package net.tavoai.zap.ai.api;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,10 +12,11 @@ import org.zaproxy.zap.extension.api.ApiResponseElement;
 import org.zaproxy.zap.extension.api.ApiResponseList;
 import org.zaproxy.zap.extension.api.ApiResponseSet;
 
-import com.tavoai.zap.ai.scan.AIScanController;
-import com.tavoai.zap.ai.detector.AIDetector;
-import com.tavoai.zap.ai.model.AIThreat;
-import com.tavoai.zap.ai.model.ScanResult;
+import net.tavoai.zap.ai.scan.AIScanController;
+import net.tavoai.zap.ai.detector.AIDetector;
+import net.tavoai.zap.ai.detector.PIIFilter;
+import net.tavoai.zap.ai.model.AIThreat;
+import net.tavoai.zap.ai.model.ScanResult;
 
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,10 @@ public class AIApiImplementor extends ApiImplementor {
         addApiAction(new ApiAction("results", Arrays.asList("scanId"), Arrays.asList()));
         addApiAction(new ApiAction("threats", Arrays.asList(), Arrays.asList()));
         addApiAction(new ApiAction("status", Arrays.asList(), Arrays.asList()));
+        // PII filtering actions
+        addApiAction(new ApiAction("filterPII", Arrays.asList("content"), Arrays.asList()));
+        addApiAction(new ApiAction("detectPII", Arrays.asList("content"), Arrays.asList()));
+        addApiAction(new ApiAction("configurePII", Arrays.asList("enabled", "strategy"), Arrays.asList()));
     }
 
     @Override
@@ -66,6 +71,10 @@ public class AIApiImplementor extends ApiImplementor {
                 case "results" -> handleResultsAction(parameters);
                 case "threats" -> handleThreatsAction(parameters);
                 case "status" -> handleStatusAction(parameters);
+                // PII filtering actions
+                case "filterPII" -> handleFilterPIIAction(parameters);
+                case "detectPII" -> handleDetectPIIAction(parameters);
+                case "configurePII" -> handleConfigurePIIAction(parameters);
                 default -> throw new ApiException(ApiException.Type.BAD_ACTION, "Unknown action: " + name);
             };
         } catch (Exception e) {
@@ -222,6 +231,103 @@ public class AIApiImplementor extends ApiImplementor {
 
         } catch (Exception e) {
             throw new ApiException(ApiException.Type.INTERNAL_ERROR, "Failed to get status: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Handle filter PII action.
+     *
+     * @param parameters action parameters
+     * @return API response
+     */
+    private ApiResponse handleFilterPIIAction(Map<String, String> parameters) throws ApiException {
+        String content = parameters.get("content");
+        if (content == null || content.isEmpty()) {
+            throw new ApiException(ApiException.Type.MISSING_PARAMETER, "content parameter is required");
+        }
+
+        try {
+            String filteredContent = aiDetector.getPIIFilter().filterPII(content);
+
+            // ZAP 2.16.0 ApiResponseSet constructor takes (String, Map)
+            Map<String, String> responseData = new HashMap<>();
+            responseData.put("originalLength", String.valueOf(content.length()));
+            responseData.put("filteredLength", String.valueOf(filteredContent.length()));
+            responseData.put("filteredContent", filteredContent);
+
+            return new ApiResponseSet("piiFilter", responseData);
+
+        } catch (Exception e) {
+            throw new ApiException(ApiException.Type.INTERNAL_ERROR, "Failed to filter PII: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Handle detect PII action.
+     *
+     * @param parameters action parameters
+     * @return API response
+     */
+    private ApiResponse handleDetectPIIAction(Map<String, String> parameters) throws ApiException {
+        String content = parameters.get("content");
+        if (content == null || content.isEmpty()) {
+            throw new ApiException(ApiException.Type.MISSING_PARAMETER, "content parameter is required");
+        }
+
+        try {
+            List<PIIFilter.PIIDetection> detections = aiDetector.getPIIFilter().detectPII(content);
+
+            ApiResponseList response = new ApiResponseList("piiDetections");
+            for (PIIFilter.PIIDetection detection : detections) {
+                // ZAP 2.16.0 ApiResponseSet constructor takes (String, Map)
+                Map<String, String> detectionData = new HashMap<>();
+                detectionData.put("type", detection.getType());
+                detectionData.put("severity", detection.getSeverity().toString());
+                detectionData.put("originalValue", detection.getOriginalValue());
+                detectionData.put("startPosition", String.valueOf(detection.getStartPosition()));
+                detectionData.put("endPosition", String.valueOf(detection.getEndPosition()));
+                response.addItem(new ApiResponseSet("piiDetection", detectionData));
+            }
+
+            return response;
+
+        } catch (Exception e) {
+            throw new ApiException(ApiException.Type.INTERNAL_ERROR, "Failed to detect PII: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Handle configure PII action.
+     *
+     * @param parameters action parameters
+     * @return API response
+     */
+    private ApiResponse handleConfigurePIIAction(Map<String, String> parameters) throws ApiException {
+        String enabledStr = parameters.get("enabled");
+        String strategyStr = parameters.get("strategy");
+
+        try {
+            PIIFilter piiFilter = aiDetector.getPIIFilter();
+
+            if (enabledStr != null) {
+                boolean enabled = Boolean.parseBoolean(enabledStr);
+                piiFilter.setEnabled(enabled);
+            }
+
+            if (strategyStr != null) {
+                PIIFilter.ReplacementStrategy strategy = PIIFilter.ReplacementStrategy.valueOf(strategyStr.toUpperCase());
+                piiFilter.setReplacementStrategy(strategy);
+            }
+
+            // ZAP 2.16.0 ApiResponseSet constructor takes (String, Map)
+            Map<String, String> responseData = new HashMap<>();
+            responseData.put("enabled", String.valueOf(piiFilter.isEnabled()));
+            responseData.put("strategy", piiFilter.getReplacementStrategy().toString());
+
+            return new ApiResponseSet("piiConfiguration", responseData);
+
+        } catch (Exception e) {
+            throw new ApiException(ApiException.Type.INTERNAL_ERROR, "Failed to configure PII filter: " + e.getMessage());
         }
     }
 

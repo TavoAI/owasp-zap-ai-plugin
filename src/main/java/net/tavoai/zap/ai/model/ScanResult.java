@@ -1,4 +1,4 @@
-package com.tavoai.zap.ai.model;
+package net.tavoai.zap.ai.model;
 
 /**
  * Represents the result of an AI security scan.

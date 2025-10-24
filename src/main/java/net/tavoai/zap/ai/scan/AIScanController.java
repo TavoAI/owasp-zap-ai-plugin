@@ -1,4 +1,4 @@
-package com.tavoai.zap.ai.scan;
+package net.tavoai.zap.ai.scan;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,11 +10,11 @@ import org.parosproxy.paros.model.SiteNode;
 import org.parosproxy.paros.network.HttpMessage;
 import org.zaproxy.zap.extension.ascan.ScanPolicy;
 
-import com.tavoai.zap.ai.rules.AIActiveScanRules;
-import com.tavoai.zap.ai.rules.AIPassiveScanRules;
-import com.tavoai.zap.ai.detector.AIDetector;
-import com.tavoai.zap.ai.model.AIThreat;
-import com.tavoai.zap.ai.model.ScanResult;
+import net.tavoai.zap.ai.rules.AIActiveScanRules;
+import net.tavoai.zap.ai.rules.AIPassiveScanRules;
+import net.tavoai.zap.ai.detector.AIDetector;
+import net.tavoai.zap.ai.model.AIThreat;
+import net.tavoai.zap.ai.model.ScanResult;
 
 import java.util.List;
 import java.util.ArrayList;

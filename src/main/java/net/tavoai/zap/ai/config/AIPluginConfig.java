@@ -1,4 +1,4 @@
-package com.tavoai.zap.ai.config;
+package net.tavoai.zap.ai.config;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,7 +14,7 @@ public class AIPluginConfig {
 
     private static final Logger logger = LogManager.getLogger(AIPluginConfig.class);
 
-    private static final String PREF_NODE = "com/tavoai/zap/ai";
+    private static final String PREF_NODE = "net/tavoai/zap/ai";
 
     // Configuration keys
     private static final String API_KEY = "api_key";

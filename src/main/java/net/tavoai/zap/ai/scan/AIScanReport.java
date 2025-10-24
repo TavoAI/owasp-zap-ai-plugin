@@ -1,9 +1,9 @@
-package com.tavoai.zap.ai.scan;
+package net.tavoai.zap.ai.scan;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.tavoai.zap.ai.model.ScanResult;
+import net.tavoai.zap.ai.model.ScanResult;
 
 import java.util.List;
 import java.util.Map;

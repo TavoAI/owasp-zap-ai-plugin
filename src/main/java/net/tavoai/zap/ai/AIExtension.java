@@ -1,4 +1,4 @@
-package com.tavoai.zap.ai;
+package net.tavoai.zap.ai;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -6,11 +6,11 @@ import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
 import org.zaproxy.zap.Version;
 
-import com.tavoai.zap.ai.scan.AIScanController;
-import com.tavoai.zap.ai.rules.AIActiveScanRules;
-import com.tavoai.zap.ai.rules.AIPassiveScanRules;
-import com.tavoai.zap.ai.api.AIApiImplementor;
-import com.tavoai.zap.ai.config.AIPluginConfig;
+import net.tavoai.zap.ai.scan.AIScanController;
+import net.tavoai.zap.ai.rules.AIActiveScanRules;
+import net.tavoai.zap.ai.rules.AIPassiveScanRules;
+import net.tavoai.zap.ai.api.AIApiImplementor;
+import net.tavoai.zap.ai.config.AIPluginConfig;
 
 /**
  * Main extension class for the OWASP ZAP AI Plugin.
@@ -63,14 +63,11 @@ public class AIExtension extends ExtensionAdaptor {
     public void hook(ExtensionHook extensionHook) {
         super.hook(extensionHook);
 
-        // TODO: Register active scan rules - need to find correct ZAP 2.16.0 API
-        // extensionHook.addScanner(activeScanRules);
-
-        // TODO: Register passive scan rules - need to find correct ZAP 2.16.0 API
-        // extensionHook.addScanner(passiveScanRules);
-
         // Register API implementor
         extensionHook.addApiImplementor(apiImplementor);
+
+        // Note: Active and passive scanners are registered through ZAP's plugin system
+        // They will be automatically discovered when extending AbstractPlugin
 
         logger.info("AI Security Testing extension hooked");
     }

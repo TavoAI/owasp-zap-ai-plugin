@@ -1,13 +1,13 @@
-package com.tavoai.zap.ai.rules;
+package net.tavoai.zap.ai.rules;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.parosproxy.paros.network.HttpMessage;
 import org.zaproxy.zap.model.TechSet;
 
-import com.tavoai.zap.ai.detector.AIDetector;
-import com.tavoai.zap.ai.model.AIThreat;
-import com.tavoai.zap.ai.client.BackendClient;
+import net.tavoai.zap.ai.detector.AIDetector;
+import net.tavoai.zap.ai.model.AIThreat;
+import net.tavoai.zap.ai.client.BackendClient;
 
 import java.util.List;
 

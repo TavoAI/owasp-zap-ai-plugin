@@ -1,4 +1,4 @@
-package com.tavoai.zap.ai.client;
+package net.tavoai.zap.ai.client;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,8 +15,8 @@ import org.apache.hc.core5.http.io.entity.StringEntity;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.tavoai.zap.ai.model.ThreatType;
-import com.tavoai.zap.ai.model.ThreatSeverity;
+import net.tavoai.zap.ai.model.ThreatType;
+import net.tavoai.zap.ai.model.ThreatSeverity;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

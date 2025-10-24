@@ -5,7 +5,7 @@
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.tavoai</groupId>
+    <groupId>net.tavoai</groupId>
     <artifactId>zap-ai-plugin</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
@@ -20,7 +20,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <zap.version>2.16.0</zap.version>
         <junit.version>5.9.2</junit.version>
-        <mockito.version>5.1.1</mockito.version>
+        <mockito.version>5.11.0</mockito.version>
+        <bytebuddy.version>1.14.12</bytebuddy.version>
     </properties>
 
     <dependencies>
@@ -81,6 +82,21 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Byte Buddy for Java 21 compatibility -->
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>${bytebuddy.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>${bytebuddy.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -120,7 +136,7 @@
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                         <manifestEntries>
-                            <Zap-AddOn-Id>com.tavoai.zap.ai</Zap-AddOn-Id>
+                            <Zap-AddOn-Id>net.tavoai.zap.ai</Zap-AddOn-Id>
                             <Zap-AddOn-Name>AI Security Testing</Zap-AddOn-Name>
                             <Zap-AddOn-Version>${project.version}</Zap-AddOn-Version>
                             <Zap-AddOn-Description>AI-specific security testing for OWASP ZAP</Zap-AddOn-Description>
@@ -145,7 +161,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <addOnId>com.tavoai.zap.ai</addOnId>
+                    <addOnId>net.tavoai.zap.ai</addOnId>
                     <addOnName>AI Security Testing</addOnName>
                     <addOnVersion>${project.version}</addOnVersion>
                     <addOnDescription>AI-specific security testing for OWASP ZAP</addOnDescription>

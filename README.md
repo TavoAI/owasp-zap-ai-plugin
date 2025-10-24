@@ -450,7 +450,7 @@ curl "http://localhost:8080/JSON/ai/view/status/"
 # Configure API key for backend submissions
 curl "http://localhost:8080/JSON/ai/action/configureBackend/" \
   -d "apiKey=your-api-key" \
-  -d "backendUrl=https://api.tavoai.com" \
+  -d "backendUrl=https://api.tavoai.net" \
   -d "submitSuspicious=true" \
   -d "submitBorderline=false"
 ```
@@ -466,7 +466,7 @@ zap = ZAPv2(apikey='your-api-key')
 # Configure backend integration
 zap.ai.configure_backend(
     api_key='your-api-key',
-    backend_url='https://api.tavoai.com',
+    backend_url='https://api.tavoai.net',
     submit_suspicious=True,
     submit_borderline=False
 )

@@ -1,13 +1,13 @@
-package com.tavoai.zap.ai.detector;
+package net.tavoai.zap.ai.detector;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.parosproxy.paros.network.HttpMessage;
 
-import com.tavoai.zap.ai.model.AIThreat;
-import com.tavoai.zap.ai.model.ThreatType;
-import com.tavoai.zap.ai.model.ThreatSeverity;
-import com.tavoai.zap.ai.client.BackendClient;
+import net.tavoai.zap.ai.model.AIThreat;
+import net.tavoai.zap.ai.model.ThreatType;
+import net.tavoai.zap.ai.model.ThreatSeverity;
+import net.tavoai.zap.ai.client.BackendClient;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -35,6 +35,9 @@ public class AIDetector {
     private boolean submitSuspiciousContent = true;
     private boolean submitBorderlineContent = false;
     private Map<String, Pattern> customPatterns = new HashMap<>();
+
+    // PII Filter for content sanitization
+    private final PIIFilter piiFilter;
 
     // Default patterns for detecting prompt injection attempts
     private static final Pattern PROMPT_INJECTION_PATTERN = Pattern.compile(
@@ -78,6 +81,14 @@ public class AIDetector {
         "audio/transcriptions|audio/translations|moderations|models|fine-tunes|" +
         "files|assistants|threads|messages|runs|steps)"
     );
+
+    /**
+     * Constructor.
+     */
+    public AIDetector() {
+        this.piiFilter = new PIIFilter();
+        logger.info("AI Detector initialized with PII filtering enabled");
+    }
 
     /**
      * Configure backend integration settings.
@@ -177,7 +188,16 @@ public class AIDetector {
         }
 
         try {
-            Optional<String> analysisId = backendClient.submitForAnalysis(content, threatType, severity, url);
+            // Filter PII before submission
+            String filteredContent = piiFilter.filterPII(content);
+            List<PIIFilter.PIIDetection> piiDetections = piiFilter.detectPII(content);
+
+            if (!piiDetections.isEmpty()) {
+                logger.info("Filtered {} PII detections before backend submission for threat: {}",
+                           piiDetections.size(), threatType);
+            }
+
+            Optional<String> analysisId = backendClient.submitForAnalysis(filteredContent, threatType, severity, url);
             if (analysisId.isPresent()) {
                 logger.debug("Content submitted for backend analysis - ID: {}, Type: {}, Severity: {}",
                            analysisId.get(), threatType, severity);
@@ -226,6 +246,15 @@ public class AIDetector {
      */
     public Map<String, Pattern> getCustomPatterns() {
         return new HashMap<>(customPatterns);
+    }
+
+    /**
+     * Get the PII filter instance.
+     *
+     * @return the PII filter
+     */
+    public PIIFilter getPIIFilter() {
+        return piiFilter;
     }
 
     /**
