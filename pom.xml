@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.tavoai</groupId>
+    <artifactId>zap-ai-plugin</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>OWASP ZAP AI Plugin</name>
+    <description>AI-specific security testing extension for OWASP ZAP</description>
+    <url>https://github.com/tavoai/owasp-zap-ai-plugin</url>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <zap.version>2.16.0</zap.version>
+        <junit.version>5.9.2</junit.version>
+        <mockito.version>5.1.1</mockito.version>
+    </properties>
+
+    <dependencies>
+        <!-- ZAP Core Dependencies -->
+        <dependency>
+            <groupId>org.zaproxy</groupId>
+            <artifactId>zap</artifactId>
+            <version>${zap.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- JSON Processing -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+
+        <!-- HTTP Client -->
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>5.2.1</version>
+        </dependency>
+
+        <!-- Regular Expressions -->
+        <dependency>
+            <groupId>com.google.re2j</groupId>
+            <artifactId>re2j</artifactId>
+            <version>1.7</version>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.20.0</version>
+        </dependency>
+
+        <!-- Testing Dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Maven Compiler Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                </configuration>
+            </plugin>
+
+            <!-- Maven Surefire Plugin for Testing -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.1.2</version>
+                <configuration>
+                    <includes>
+                        <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
+                    </includes>
+                </configuration>
+            </plugin>
+
+            <!-- Maven JAR Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Zap-AddOn-Id>com.tavoai.zap.ai</Zap-AddOn-Id>
+                            <Zap-AddOn-Name>AI Security Testing</Zap-AddOn-Name>
+                            <Zap-AddOn-Version>${project.version}</Zap-AddOn-Version>
+                            <Zap-AddOn-Description>AI-specific security testing for OWASP ZAP</Zap-AddOn-Description>
+                            <Zap-AddOn-Author>TavoAI</Zap-AddOn-Author>
+                            <Zap-AddOn-Url>https://github.com/tavoai/owasp-zap-ai-plugin</Zap-AddOn-Url>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- ZAP Add-on Plugin -->
+            <plugin>
+                <groupId>org.zaproxy</groupId>
+                <artifactId>zap-add-on-maven-plugin</artifactId>
+                <version>0.6.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>addon</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <addOnId>com.tavoai.zap.ai</addOnId>
+                    <addOnName>AI Security Testing</addOnName>
+                    <addOnVersion>${project.version}</addOnVersion>
+                    <addOnDescription>AI-specific security testing for OWASP ZAP</addOnDescription>
+                    <addOnAuthor>TavoAI</addOnAuthor>
+                    <addOnUrl>https://github.com/tavoai/owasp-zap-ai-plugin</addOnUrl>
+                    <addOnChangesUrl>https://github.com/tavoai/owasp-zap-ai-plugin/blob/main/CHANGELOG.md</addOnChangesUrl>
+                    <addOnRepoUrl>https://github.com/tavoai/owasp-zap-ai-plugin</addOnRepoUrl>
+                    <files>
+                        <file>src/main/zap</file>
+                    </files>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
